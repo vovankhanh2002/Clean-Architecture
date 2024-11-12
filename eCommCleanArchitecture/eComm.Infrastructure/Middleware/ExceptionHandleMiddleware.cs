@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-
 namespace eComm.Infrastructure.Middleware
 {
     public class ExceptionHandleMiddleware(RequestDelegate request)
@@ -14,8 +13,40 @@ namespace eComm.Infrastructure.Middleware
             }
             catch (DbUpdateException ex)
             {
-
+                context.Response.ContentType = "application/json";
+                if (ex.InnerException is SqlException exception)
+                {
+                    switch (exception.Number) 
+                    {
+                        case 2627:
+                            context.Response.StatusCode = StatusCodes.Status409Conflict;
+                            await context.Response.WriteAsync("Unique constraint violation");
+                            break;
+                        case 515:
+                            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                            await context.Response.WriteAsync("Not insert");
+                            break;
+                        case 547:
+                            context.Response.StatusCode = StatusCodes.Status409Conflict;
+                            await context.Response.WriteAsync("Foreign key constrain");
+                            break;
+                        default:
+                            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                            await context.Response.WriteAsync("Error while processing");
+                            break;
+                    }
+                }
+                else
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    await context.Response.WriteAsync("Error while saving entity change");
+                }
             }
-        }
+            catch (Exception ex)
+            {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await context.Response.WriteAsync("Error" + ex.Message);
+            }
+         }
     }
 }

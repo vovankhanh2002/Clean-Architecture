@@ -1,6 +1,6 @@
-﻿using eComm.Domain.Interfaces;
+﻿using eComm.Application.Exceptions;
+using eComm.Domain.Interfaces;
 using eComm.Infrastructure.Data;
-using eComm.Infrastructure.Exceptions;
 using Microsoft.EntityFrameworkCore;
 namespace eComm.Infrastructure.Repositories
 {
